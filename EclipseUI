@@ -1,0 +1,416 @@
+local EclipseLib = {}
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+
+-- Utility Functions
+local function Tween(obj, props, duration)
+    local tween = TweenService:Create(obj, TweenInfo.new(duration or 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
+    tween:Play()
+    return tween
+end
+
+local function MakeDraggable(frame, handle)
+    local dragging, dragInput, dragStart, startPos
+    
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- Create Window
+function EclipseLib:CreateWindow(config)
+    local WindowManager = {}
+    WindowManager.Tabs = {}
+    WindowManager.CurrentTab = nil
+    
+    -- Create ScreenGui
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "EclipseUI"
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = CoreGui
+    
+    -- Main Frame
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 550, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -275, 0.5, -200)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = ScreenGui
+    
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = MainFrame
+    
+    -- Drop Shadow
+    local Shadow = Instance.new("ImageLabel")
+    Shadow.Name = "Shadow"
+    Shadow.Size = UDim2.new(1, 40, 1, 40)
+    Shadow.Position = UDim2.new(0, -20, 0, -20)
+    Shadow.BackgroundTransparency = 1
+    Shadow.Image = "rbxassetid://5554236805"
+    Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    Shadow.ImageTransparency = 0.5
+    Shadow.ScaleType = Enum.ScaleType.Slice
+    Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
+    Shadow.ZIndex = 0
+    Shadow.Parent = MainFrame
+    
+    -- Top Bar
+    local TopBar = Instance.new("Frame")
+    TopBar.Name = "TopBar"
+    TopBar.Size = UDim2.new(1, 0, 0, 40)
+    TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    TopBar.BorderSizePixel = 0
+    TopBar.Parent = MainFrame
+    
+    local TopCorner = Instance.new("UICorner")
+    TopCorner.CornerRadius = UDim.new(0, 8)
+    TopCorner.Parent = TopBar
+    
+    local TopBarExtend = Instance.new("Frame")
+    TopBarExtend.Size = UDim2.new(1, 0, 0, 8)
+    TopBarExtend.Position = UDim2.new(0, 0, 1, -8)
+    TopBarExtend.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    TopBarExtend.BorderSizePixel = 0
+    TopBarExtend.Parent = TopBar
+    
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(1, -100, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = config.Name or "Eclipse Hub"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 16
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = TopBar
+    
+    -- Close Button
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Name = "CloseButton"
+    CloseButton.Size = UDim2.new(0, 30, 0, 30)
+    CloseButton.Position = UDim2.new(1, -35, 0, 5)
+    CloseButton.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    CloseButton.Text = "X"
+    CloseButton.TextColor3 = Color3.fromRGB(255, 70, 70)
+    CloseButton.TextSize = 14
+    CloseButton.Font = Enum.Font.GothamBold
+    CloseButton.Parent = TopBar
+    
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0, 6)
+    CloseCorner.Parent = CloseButton
+    
+    CloseButton.MouseEnter:Connect(function()
+        Tween(CloseButton, {BackgroundColor3 = Color3.fromRGB(255, 70, 70)}, 0.2)
+        Tween(CloseButton, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.2)
+    end)
+    
+    CloseButton.MouseLeave:Connect(function()
+        Tween(CloseButton, {BackgroundColor3 = Color3.fromRGB(40, 40, 45)}, 0.2)
+        Tween(CloseButton, {TextColor3 = Color3.fromRGB(255, 70, 70)}, 0.2)
+    end)
+    
+    CloseButton.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
+    
+    -- Tab Container
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Size = UDim2.new(0, 140, 1, -50)
+    TabContainer.Position = UDim2.new(0, 10, 0, 45)
+    TabContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    TabContainer.BorderSizePixel = 0
+    TabContainer.Parent = MainFrame
+    
+    local TabCorner = Instance.new("UICorner")
+    TabCorner.CornerRadius = UDim.new(0, 6)
+    TabCorner.Parent = TabContainer
+    
+    local TabList = Instance.new("UIListLayout")
+    TabList.SortOrder = Enum.SortOrder.LayoutOrder
+    TabList.Padding = UDim.new(0, 5)
+    TabList.Parent = TabContainer
+    
+    local TabPadding = Instance.new("UIPadding")
+    TabPadding.PaddingTop = UDim.new(0, 8)
+    TabPadding.PaddingLeft = UDim.new(0, 8)
+    TabPadding.PaddingRight = UDim.new(0, 8)
+    TabPadding.Parent = TabContainer
+    
+    -- Content Container
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Name = "ContentContainer"
+    ContentContainer.Size = UDim2.new(1, -165, 1, -50)
+    ContentContainer.Position = UDim2.new(0, 155, 0, 45)
+    ContentContainer.BackgroundTransparency = 1
+    ContentContainer.BorderSizePixel = 0
+    ContentContainer.Parent = MainFrame
+    
+    -- Make draggable
+    MakeDraggable(MainFrame, TopBar)
+    
+    -- Toggle UI Keybind
+    local toggleKey = config.ToggleUIKeybind or Enum.KeyCode.K
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == toggleKey then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end)
+    
+    -- Create Tab Function
+    function WindowManager:CreateTab(name, icon)
+        local TabManager = {}
+        TabManager.Sections = {}
+        
+        -- Tab Button
+        local TabButton = Instance.new("TextButton")
+        TabButton.Name = name
+        TabButton.Size = UDim2.new(1, 0, 0, 35)
+        TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        TabButton.Text = name
+        TabButton.TextColor3 = Color3.fromRGB(180, 180, 180)
+        TabButton.TextSize = 13
+        TabButton.Font = Enum.Font.Gotham
+        TabButton.Parent = TabContainer
+        
+        local TabButtonCorner = Instance.new("UICorner")
+        TabButtonCorner.CornerRadius = UDim.new(0, 5)
+        TabButtonCorner.Parent = TabButton
+        
+        -- Tab Content
+        local TabContent = Instance.new("ScrollingFrame")
+        TabContent.Name = name .. "Content"
+        TabContent.Size = UDim2.new(1, 0, 1, 0)
+        TabContent.BackgroundTransparency = 1
+        TabContent.BorderSizePixel = 0
+        TabContent.ScrollBarThickness = 4
+        TabContent.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 70)
+        TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+        TabContent.Visible = false
+        TabContent.Parent = ContentContainer
+        
+        local ContentList = Instance.new("UIListLayout")
+        ContentList.SortOrder = Enum.SortOrder.LayoutOrder
+        ContentList.Padding = UDim.new(0, 8)
+        ContentList.Parent = TabContent
+        
+        local ContentPadding = Instance.new("UIPadding")
+        ContentPadding.PaddingTop = UDim.new(0, 8)
+        ContentPadding.PaddingLeft = UDim.new(0, 8)
+        ContentPadding.PaddingRight = UDim.new(0, 8)
+        ContentPadding.PaddingBottom = UDim.new(0, 8)
+        ContentPadding.Parent = TabContent
+        
+        ContentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentList.AbsoluteContentSize.Y + 16)
+        end)
+        
+        -- Tab Button Click
+        TabButton.MouseButton1Click:Connect(function()
+            for _, tab in pairs(WindowManager.Tabs) do
+                tab.Button.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+                tab.Button.TextColor3 = Color3.fromRGB(180, 180, 180)
+                tab.Content.Visible = false
+            end
+            
+            TabButton.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TabContent.Visible = true
+            WindowManager.CurrentTab = TabManager
+        end)
+        
+        TabButton.MouseEnter:Connect(function()
+            if WindowManager.CurrentTab ~= TabManager then
+                Tween(TabButton, {BackgroundColor3 = Color3.fromRGB(45, 45, 50)}, 0.2)
+            end
+        end)
+        
+        TabButton.MouseLeave:Connect(function()
+            if WindowManager.CurrentTab ~= TabManager then
+                Tween(TabButton, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
+            end
+        end)
+        
+        TabManager.Button = TabButton
+        TabManager.Content = TabContent
+        table.insert(WindowManager.Tabs, TabManager)
+        
+        -- Auto-select first tab
+        if #WindowManager.Tabs == 1 then
+            TabButton.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TabContent.Visible = true
+            WindowManager.CurrentTab = TabManager
+        end
+        
+        -- Create Section Function
+        function TabManager:CreateSection(name)
+            local SectionManager = {}
+            
+            local Section = Instance.new("Frame")
+            Section.Name = name
+            Section.Size = UDim2.new(1, 0, 0, 30)
+            Section.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+            Section.BorderSizePixel = 0
+            Section.Parent = TabContent
+            
+            local SectionCorner = Instance.new("UICorner")
+            SectionCorner.CornerRadius = UDim.new(0, 6)
+            SectionCorner.Parent = Section
+            
+            local SectionTitle = Instance.new("TextLabel")
+            SectionTitle.Name = "Title"
+            SectionTitle.Size = UDim2.new(1, -20, 0, 30)
+            SectionTitle.Position = UDim2.new(0, 10, 0, 0)
+            SectionTitle.BackgroundTransparency = 1
+            SectionTitle.Text = name
+            SectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            SectionTitle.TextSize = 14
+            SectionTitle.Font = Enum.Font.GothamBold
+            SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+            SectionTitle.Parent = Section
+            
+            local SectionContainer = Instance.new("Frame")
+            SectionContainer.Name = "Container"
+            SectionContainer.Size = UDim2.new(1, -16, 1, -38)
+            SectionContainer.Position = UDim2.new(0, 8, 0, 38)
+            SectionContainer.BackgroundTransparency = 1
+            SectionContainer.Parent = Section
+            
+            local SectionList = Instance.new("UIListLayout")
+            SectionList.SortOrder = Enum.SortOrder.LayoutOrder
+            SectionList.Padding = UDim.new(0, 6)
+            SectionList.Parent = SectionContainer
+            
+            SectionList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                Section.Size = UDim2.new(1, 0, 0, SectionList.AbsoluteContentSize.Y + 46)
+            end)
+            
+            SectionManager.Section = Section
+            SectionManager.Container = SectionContainer
+            table.insert(TabManager.Sections, SectionManager)
+            
+            -- Create Button
+            function SectionManager:CreateButton(config)
+                local Button = Instance.new("TextButton")
+                Button.Name = config.Name
+                Button.Size = UDim2.new(1, 0, 0, 32)
+                Button.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+                Button.Text = config.Name
+                Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Button.TextSize = 13
+                Button.Font = Enum.Font.Gotham
+                Button.Parent = SectionContainer
+                
+                local ButtonCorner = Instance.new("UICorner")
+                ButtonCorner.CornerRadius = UDim.new(0, 5)
+                ButtonCorner.Parent = Button
+                
+                Button.MouseEnter:Connect(function()
+                    Tween(Button, {BackgroundColor3 = Color3.fromRGB(88, 101, 242)}, 0.2)
+                end)
+                
+                Button.MouseLeave:Connect(function()
+                    Tween(Button, {BackgroundColor3 = Color3.fromRGB(40, 40, 45)}, 0.2)
+                end)
+                
+                Button.MouseButton1Click:Connect(function()
+                    Tween(Button, {BackgroundColor3 = Color3.fromRGB(70, 80, 200)}, 0.1)
+                    task.wait(0.1)
+                    Tween(Button, {BackgroundColor3 = Color3.fromRGB(88, 101, 242)}, 0.1)
+                    if config.Callback then
+                        config.Callback()
+                    end
+                end)
+                
+                return Button
+            end
+            
+            return SectionManager
+        end
+        
+        return TabManager
+    end
+    
+    -- Notification Function
+    function WindowManager:Notify(config)
+        local NotifFrame = Instance.new("Frame")
+        NotifFrame.Name = "Notification"
+        NotifFrame.Size = UDim2.new(0, 300, 0, 80)
+        NotifFrame.Position = UDim2.new(1, 10, 1, -90)
+        NotifFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        NotifFrame.BorderSizePixel = 0
+        NotifFrame.Parent = ScreenGui
+        
+        local NotifCorner = Instance.new("UICorner")
+        NotifCorner.CornerRadius = UDim.new(0, 8)
+        NotifCorner.Parent = NotifFrame
+        
+        local NotifTitle = Instance.new("TextLabel")
+        NotifTitle.Size = UDim2.new(1, -20, 0, 25)
+        NotifTitle.Position = UDim2.new(0, 10, 0, 8)
+        NotifTitle.BackgroundTransparency = 1
+        NotifTitle.Text = config.Title or "Notification"
+        NotifTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        NotifTitle.TextSize = 14
+        NotifTitle.Font = Enum.Font.GothamBold
+        NotifTitle.TextXAlignment = Enum.TextXAlignment.Left
+        NotifTitle.Parent = NotifFrame
+        
+        local NotifContent = Instance.new("TextLabel")
+        NotifContent.Size = UDim2.new(1, -20, 1, -38)
+        NotifContent.Position = UDim2.new(0, 10, 0, 33)
+        NotifContent.BackgroundTransparency = 1
+        NotifContent.Text = config.Content or ""
+        NotifContent.TextColor3 = Color3.fromRGB(200, 200, 200)
+        NotifContent.TextSize = 12
+        NotifContent.Font = Enum.Font.Gotham
+        NotifContent.TextXAlignment = Enum.TextXAlignment.Left
+        NotifContent.TextYAlignment = Enum.TextYAlignment.Top
+        NotifContent.TextWrapped = true
+        NotifContent.Parent = NotifFrame
+        
+        Tween(NotifFrame, {Position = UDim2.new(1, -310, 1, -90)}, 0.5)
+        
+        task.wait(config.Duration or 5)
+        
+        Tween(NotifFrame, {Position = UDim2.new(1, 10, 1, -90)}, 0.5)
+        task.wait(0.5)
+        NotifFrame:Destroy()
+    end
+    
+    return WindowManager
+end
+
+return EclipseLib
