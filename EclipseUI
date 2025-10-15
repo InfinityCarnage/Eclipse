@@ -100,6 +100,9 @@ function EclipseLib:CreateWindow(config)
     LoadingCorner.CornerRadius = UDim.new(0, 10)
     LoadingCorner.Parent = LoadingFrame
     
+    -- Make MainFrame draggable immediately (even during loading)
+    MakeDraggable(MainFrame, LoadingFrame)
+    
     -- Logo Container
     local LogoContainer = Instance.new("Frame")
     LogoContainer.Name = "LogoContainer"
@@ -228,6 +231,9 @@ function EclipseLib:CreateWindow(config)
         task.wait(0.5)
         
         LoadingFrame:Destroy()
+        
+        -- Switch to TopBar for dragging after loading completes
+        MakeDraggable(MainFrame, TopBar)
     end)
     
     -- Top Bar
@@ -365,8 +371,8 @@ function EclipseLib:CreateWindow(config)
     ContentContainer.BorderSizePixel = 0
     ContentContainer.Parent = MainFrame
     
-    -- Make draggable
-    MakeDraggable(MainFrame, TopBar)
+    -- Make draggable with TopBar (after loading completes)
+    -- Note: Already made draggable with LoadingFrame during loading
     
     -- Toggle UI Keybind
     local toggleKey = config.ToggleUIKeybind or Enum.KeyCode.K
