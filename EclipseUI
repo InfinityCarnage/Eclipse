@@ -58,14 +58,157 @@ function EclipseLib:CreateWindow(config)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = CoreGui
     
+    -- Loading Screen
+    local LoadingFrame = Instance.new("Frame")
+    LoadingFrame.Name = "LoadingScreen"
+    LoadingFrame.Size = UDim2.new(1, 0, 1, 0)
+    LoadingFrame.Position = UDim2.new(0, 0, 0, 0)
+    LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    LoadingFrame.BackgroundTransparency = 1
+    LoadingFrame.BorderSizePixel = 0
+    LoadingFrame.ZIndex = 1000
+    LoadingFrame.Parent = ScreenGui
+    
+    -- Logo Container
+    local LogoContainer = Instance.new("Frame")
+    LogoContainer.Name = "LogoContainer"
+    LogoContainer.Size = UDim2.new(0, 150, 0, 150)
+    LogoContainer.Position = UDim2.new(0.5, -75, 0.5, -75)
+    LogoContainer.BackgroundTransparency = 1
+    LogoContainer.Parent = LoadingFrame
+    
+    -- Logo Circle Background
+    local LogoCircle = Instance.new("Frame")
+    LogoCircle.Name = "LogoCircle"
+    LogoCircle.Size = UDim2.new(0, 120, 0, 120)
+    LogoCircle.Position = UDim2.new(0.5, -60, 0, 0)
+    LogoCircle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    LogoCircle.BorderSizePixel = 0
+    LogoCircle.Parent = LogoContainer
+    
+    local CircleCorner = Instance.new("UICorner")
+    CircleCorner.CornerRadius = UDim.new(1, 0)
+    CircleCorner.Parent = LogoCircle
+    
+    -- Logo Text/Icon
+    local LogoText = Instance.new("TextLabel")
+    LogoText.Size = UDim2.new(1, 0, 1, 0)
+    LogoText.BackgroundTransparency = 1
+    LogoText.Text = config.LoadingIcon or "E"
+    LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LogoText.TextSize = 48
+    LogoText.Font = Enum.Font.GothamBold
+    LogoText.Parent = LogoCircle
+    
+    -- Loading Bar Container
+    local LoadingBarBg = Instance.new("Frame")
+    LoadingBarBg.Name = "LoadingBarBg"
+    LoadingBarBg.Size = UDim2.new(0, 200, 0, 3)
+    LoadingBarBg.Position = UDim2.new(0.5, -100, 1, 20)
+    LoadingBarBg.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    LoadingBarBg.BorderSizePixel = 0
+    LoadingBarBg.Parent = LogoContainer
+    
+    local BarCorner = Instance.new("UICorner")
+    BarCorner.CornerRadius = UDim.new(1, 0)
+    BarCorner.Parent = LoadingBarBg
+    
+    -- Loading Bar Fill
+    local LoadingBar = Instance.new("Frame")
+    LoadingBar.Name = "LoadingBar"
+    LoadingBar.Size = UDim2.new(0, 0, 1, 0)
+    LoadingBar.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+    LoadingBar.BorderSizePixel = 0
+    LoadingBar.Parent = LoadingBarBg
+    
+    local FillCorner = Instance.new("UICorner")
+    FillCorner.CornerRadius = UDim.new(1, 0)
+    FillCorner.Parent = LoadingBar
+    
+    -- Loading Text
+    local LoadingText = Instance.new("TextLabel")
+    LoadingText.Size = UDim2.new(0, 200, 0, 20)
+    LoadingText.Position = UDim2.new(0.5, -100, 1, 35)
+    LoadingText.BackgroundTransparency = 1
+    LoadingText.Text = "Loading..."
+    LoadingText.TextColor3 = Color3.fromRGB(150, 150, 150)
+    LoadingText.TextSize = 12
+    LoadingText.Font = Enum.Font.Gotham
+    LoadingText.Parent = LogoContainer
+    
+    -- Fade in loading screen
+    Tween(LoadingFrame, {BackgroundTransparency = 0}, 0.5)
+    
+    -- Floating animation for logo
+    local floatUp = true
+    local floatConnection
+    floatConnection = RunService.RenderStepped:Connect(function(dt)
+        if floatUp then
+            LogoContainer.Position = LogoContainer.Position + UDim2.new(0, 0, 0, 0.3 * dt * 60)
+            if LogoContainer.Position.Y.Offset >= -70 then
+                floatUp = false
+            end
+        else
+            LogoContainer.Position = LogoContainer.Position - UDim2.new(0, 0, 0, 0.3 * dt * 60)
+            if LogoContainer.Position.Y.Offset <= -80 then
+                floatUp = true
+            end
+        end
+    end)
+    
+    -- Simulate loading with progress bar
+    task.spawn(function()
+        local loadTime = config.LoadingTime or 2
+        local steps = 20
+        local stepTime = loadTime / steps
+        
+        for i = 1, steps do
+            LoadingBar.Size = UDim2.new(i / steps, 0, 1, 0)
+            LoadingText.Text = "Loading... " .. math.floor((i / steps) * 100) .. "%"
+            task.wait(stepTime)
+        end
+        
+        LoadingText.Text = "Complete!"
+        task.wait(0.3)
+        
+        -- Stop floating animation
+        floatConnection:Disconnect()
+        
+        -- Fade out animation
+        Tween(LogoCircle, {BackgroundColor3 = Color3.fromRGB(70, 130, 255)}, 0.3)
+        Tween(LoadingBar, {BackgroundColor3 = Color3.fromRGB(100, 255, 100)}, 0.3)
+        task.wait(0.3)
+        
+        -- Scale up and fade out
+        Tween(LogoContainer, {Size = UDim2.new(0, 200, 0, 200)}, 0.4)
+        Tween(LogoContainer, {Position = UDim2.new(0.5, -100, 0.5, -100)}, 0.4)
+        task.wait(0.2)
+        Tween(LoadingFrame, {BackgroundTransparency = 1}, 0.4)
+        Tween(LogoCircle, {BackgroundTransparency = 1}, 0.4)
+        Tween(LogoText, {TextTransparency = 1}, 0.4)
+        Tween(LoadingBarBg, {BackgroundTransparency = 1}, 0.4)
+        Tween(LoadingBar, {BackgroundTransparency = 1}, 0.4)
+        Tween(LoadingText, {TextTransparency = 1}, 0.4)
+        task.wait(0.5)
+        
+        LoadingFrame:Destroy()
+    end)
+    
     -- Main Frame
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 520, 0, 450)
     MainFrame.Position = UDim2.new(0.5, -260, 0.5, -225)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.BackgroundTransparency = 1
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
+    
+    -- Fade in main frame after loading
+    task.spawn(function()
+        task.wait((config.LoadingTime or 2) + 1)
+        Tween(MainFrame, {BackgroundTransparency = 0}, 0.5)
+    end)
     
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 10)
