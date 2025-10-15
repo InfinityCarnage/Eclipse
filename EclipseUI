@@ -1,11 +1,15 @@
--- Eclipse UI Library - Modern Dark Theme
--- A custom UI library built from scratch
+-- Eclipse UI Library - Studio Version for Easy Customization
+-- Place this in StarterPlayer > StarterPlayerScripts
 
 local EclipseLib = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+
+-- Wait for player
+local Player = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait() and Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
 -- Utility Functions
 local function Tween(obj, props, duration)
@@ -56,7 +60,7 @@ function EclipseLib:CreateWindow(config)
     ScreenGui.Name = "EclipseUI"
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = CoreGui
+    ScreenGui.Parent = PlayerGui
     
     -- Main Frame (Create FIRST, then add loading inside)
     local MainFrame = Instance.new("Frame")
@@ -126,16 +130,15 @@ function EclipseLib:CreateWindow(config)
     CircleCorner.CornerRadius = UDim.new(1, 0)
     CircleCorner.Parent = LogoCircle
     
-    -- Logo Text/Icon
-    local LogoText = Instance.new("TextLabel")
-    LogoText.Size = UDim2.new(1, 0, 1, 0)
-    LogoText.BackgroundTransparency = 1
-    LogoText.Text = config.LoadingIcon or "E"
-    LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    LogoText.TextSize = 48
-    LogoText.Font = Enum.Font.GothamBold
-    LogoText.ZIndex = 103
-    LogoText.Parent = LogoCircle
+    -- Logo Image/Icon
+    local LogoImage = Instance.new("ImageLabel")
+    LogoImage.Size = UDim2.new(0, 80, 0, 80)
+    LogoImage.Position = UDim2.new(0.5, -40, 0.5, -40)
+    LogoImage.BackgroundTransparency = 1
+    LogoImage.Image = config.LoadingIcon or "rbxassetid://7733911816" -- Default gear icon
+    LogoImage.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    LogoImage.ZIndex = 103
+    LogoImage.Parent = LogoCircle
     
     -- Loading Bar Container
     local LoadingBarBg = Instance.new("Frame")
@@ -220,7 +223,7 @@ function EclipseLib:CreateWindow(config)
         Tween(LogoContainer, {Size = UDim2.new(0, 180, 0, 180)}, 0.3)
         Tween(LogoContainer, {Position = UDim2.new(0.5, -90, 0.5, -110)}, 0.3)
         Tween(LogoCircle, {BackgroundTransparency = 1}, 0.3)
-        Tween(LogoText, {TextTransparency = 1}, 0.3)
+        Tween(LogoImage, {ImageTransparency = 1}, 0.3)
         Tween(LoadingBarBg, {BackgroundTransparency = 1}, 0.3)
         Tween(LoadingBar, {BackgroundTransparency = 1}, 0.3)
         Tween(LoadingText, {TextTransparency = 1}, 0.3)
@@ -632,4 +635,93 @@ function EclipseLib:CreateWindow(config)
     return WindowManager
 end
 
-return EclipseLib
+-- ============================================
+-- EXAMPLE USAGE - CUSTOMIZE THIS SECTION
+-- ============================================
+
+local Window = EclipseLib:CreateWindow({
+    Name = "Eclipse Hub",
+    LoadingIcon = "rbxassetid://7733911816",  -- Change to your custom image asset ID
+    LoadingTime = 2,        -- Loading duration in seconds (1-5)
+    ToggleUIKeybind = Enum.KeyCode.K
+})
+
+-- Create Settings Tab
+local TabSettings = Window:CreateTab("Settings")
+
+-- Create Player Settings Section
+local Section = TabSettings:CreateSection("Player Settings")
+
+-- Create Shadow Ban Check Button
+Section:CreateButton({
+    Name = "Check All Players Shadow Ban",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local bannedPlayers = {}
+        local notBannedPlayers = {}
+        
+        -- Check all players
+        for _, player in pairs(Players:GetPlayers()) do
+            if player:GetAttribute("banned") then
+                table.insert(bannedPlayers, player.Name)
+            else
+                table.insert(notBannedPlayers, player.Name)
+            end
+        end
+        
+        -- Create result message
+        local message = ""
+        
+        if #bannedPlayers > 0 then
+            message = message .. "Shadow Banned Players (" .. #bannedPlayers .. "):\n"
+            for _, name in pairs(bannedPlayers) do
+                message = message .. "• " .. name .. "\n"
+            end
+        end
+        
+        if #notBannedPlayers > 0 then
+            if #bannedPlayers > 0 then
+                message = message .. "\n"
+            end
+            message = message .. "Clean Players (" .. #notBannedPlayers .. "):\n"
+            for _, name in pairs(notBannedPlayers) do
+                message = message .. "• " .. name .. "\n"
+            end
+        end
+        
+        -- Show notification
+        Window:Notify({
+            Title = "Shadow Ban Check Complete",
+            Content = message,
+            Duration = 10
+        })
+    end
+})
+
+-- Create Check Self Shadow Ban Button
+Section:CreateButton({
+    Name = "Check My Shadow Ban",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        if player:GetAttribute("banned") then
+            Window:Notify({
+                Title = "Your Ban Status",
+                Content = "You are shadow banned.",
+                Duration = 5
+            })
+        else
+            Window:Notify({
+                Title = "Your Ban Status",
+                Content = "You are not shadow banned.",
+                Duration = 5
+            })
+        end
+    end
+})
+
+-- Welcome Notification
+Window:Notify({
+    Title = "Eclipse Hub",
+    Content = "Welcome to Studio! Press K to toggle.",
+    Duration = 7
+})
