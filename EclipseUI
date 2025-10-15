@@ -203,8 +203,13 @@ function EclipseLib:CreateWindow(config)
     local TabList = Instance.new("UIListLayout")
     TabList.FillDirection = Enum.FillDirection.Horizontal
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Left
-    TabList.Padding = UDim.new(0, 0)
+    TabList.VerticalAlignment = Enum.VerticalAlignment.Center
+    TabList.Padding = UDim.new(0, 8)
     TabList.Parent = TabBar
+    
+    local TabBarPadding = Instance.new("UIPadding")
+    TabBarPadding.PaddingLeft = UDim.new(0, 15)
+    TabBarPadding.Parent = TabBar
     
     -- Content Container
     local ContentContainer = Instance.new("Frame")
@@ -234,11 +239,16 @@ function EclipseLib:CreateWindow(config)
         -- Tab Button
         local TabButton = Instance.new("TextButton")
         TabButton.Name = name
-        TabButton.Size = UDim2.new(0, 120, 1, 0)
-        TabButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        TabButton.Size = UDim2.new(0, 100, 0, 32)
+        TabButton.Position = UDim2.new(0, 0, 0.5, -16)
+        TabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
         TabButton.BorderSizePixel = 0
         TabButton.Text = ""
         TabButton.Parent = TabBar
+        
+        local TabCorner = Instance.new("UICorner")
+        TabCorner.CornerRadius = UDim.new(0, 8)
+        TabCorner.Parent = TabButton
         
         -- Tab Icon & Label Container
         local TabContent = Instance.new("Frame")
@@ -247,25 +257,25 @@ function EclipseLib:CreateWindow(config)
         TabContent.Parent = TabButton
         
         local TabIcon = Instance.new("ImageLabel")
-        TabIcon.Size = UDim2.new(0, 18, 0, 18)
-        TabIcon.Position = UDim2.new(0, 15, 0.5, -9)
+        TabIcon.Size = UDim2.new(0, 16, 0, 16)
+        TabIcon.Position = UDim2.new(0, 12, 0.5, -8)
         TabIcon.BackgroundTransparency = 1
         TabIcon.Image = "rbxassetid://7733911816" -- Gear icon as placeholder
-        TabIcon.ImageColor3 = Color3.fromRGB(150, 150, 150)
+        TabIcon.ImageColor3 = Color3.fromRGB(180, 180, 180)
         TabIcon.Parent = TabContent
         
         local TabLabel = Instance.new("TextLabel")
-        TabLabel.Size = UDim2.new(1, -40, 1, 0)
-        TabLabel.Position = UDim2.new(0, 38, 0, 0)
+        TabLabel.Size = UDim2.new(1, -35, 1, 0)
+        TabLabel.Position = UDim2.new(0, 32, 0, 0)
         TabLabel.BackgroundTransparency = 1
         TabLabel.Text = name
-        TabLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        TabLabel.TextSize = 13
+        TabLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+        TabLabel.TextSize = 12
         TabLabel.Font = Enum.Font.Gotham
         TabLabel.TextXAlignment = Enum.TextXAlignment.Left
         TabLabel.Parent = TabContent
         
-        -- Active Indicator
+        -- Active Indicator (removed bottom line)
         local ActiveIndicator = Instance.new("Frame")
         ActiveIndicator.Name = "Indicator"
         ActiveIndicator.Size = UDim2.new(1, 0, 0, 2)
@@ -306,30 +316,30 @@ function EclipseLib:CreateWindow(config)
         -- Tab Button Click
         TabButton.MouseButton1Click:Connect(function()
             for _, tab in pairs(WindowManager.Tabs) do
-                tab.Button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-                tab.Label.TextColor3 = Color3.fromRGB(150, 150, 150)
-                tab.Icon.ImageColor3 = Color3.fromRGB(150, 150, 150)
+                tab.Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+                tab.Label.TextColor3 = Color3.fromRGB(180, 180, 180)
+                tab.Icon.ImageColor3 = Color3.fromRGB(180, 180, 180)
                 tab.Indicator.Visible = false
                 tab.Content.Visible = false
             end
             
-            TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            TabButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
             TabLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
             TabIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-            ActiveIndicator.Visible = true
+            ActiveIndicator.Visible = false
             TabContentFrame.Visible = true
             WindowManager.CurrentTab = TabManager
         end)
         
         TabButton.MouseEnter:Connect(function()
             if WindowManager.CurrentTab ~= TabManager then
-                Tween(TabButton, {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}, 0.2)
+                Tween(TabButton, {BackgroundColor3 = Color3.fromRGB(55, 55, 55)}, 0.2)
             end
         end)
         
         TabButton.MouseLeave:Connect(function()
             if WindowManager.CurrentTab ~= TabManager then
-                Tween(TabButton, {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}, 0.2)
+                Tween(TabButton, {BackgroundColor3 = Color3.fromRGB(45, 45, 45)}, 0.2)
             end
         end)
         
@@ -342,10 +352,10 @@ function EclipseLib:CreateWindow(config)
         
         -- Auto-select first tab
         if #WindowManager.Tabs == 1 then
-            TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            TabButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
             TabLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
             TabIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-            ActiveIndicator.Visible = true
+            ActiveIndicator.Visible = false
             TabContentFrame.Visible = true
             WindowManager.CurrentTab = TabManager
         end
@@ -373,7 +383,7 @@ function EclipseLib:CreateWindow(config)
                 local ButtonFrame = Instance.new("Frame")
                 ButtonFrame.Name = config.Name
                 ButtonFrame.Size = UDim2.new(1, 0, 0, 38)
-                ButtonFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                ButtonFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
                 ButtonFrame.BorderSizePixel = 0
                 ButtonFrame.Parent = TabContentFrame
                 
@@ -396,17 +406,17 @@ function EclipseLib:CreateWindow(config)
                 ButtonPadding.Parent = Button
                 
                 Button.MouseEnter:Connect(function()
-                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}, 0.2)
+                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(55, 55, 55)}, 0.2)
                 end)
                 
                 Button.MouseLeave:Connect(function()
-                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}, 0.2)
+                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(45, 45, 45)}, 0.2)
                 end)
                 
                 Button.MouseButton1Click:Connect(function()
-                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}, 0.1)
+                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(65, 65, 65)}, 0.1)
                     task.wait(0.1)
-                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}, 0.1)
+                    Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(55, 55, 55)}, 0.1)
                     if config.Callback then
                         config.Callback()
                     end
