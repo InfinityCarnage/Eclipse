@@ -641,7 +641,7 @@ end
 
 local Window = EclipseLib:CreateWindow({
     Name = "Eclipse Hub",
-    LoadingIcon = "rbxassetid://7733911816",  -- Change to your custom image asset ID
+    LoadingIcon = "rbxassetid://82860658379709",  -- Change to your custom image asset ID
     LoadingTime = 2,        -- Loading duration in seconds (1-5)
     ToggleUIKeybind = Enum.KeyCode.K
 })
