@@ -58,13 +58,14 @@ function EclipseLib:CreateWindow(config)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = CoreGui
     
-    -- Main Frame
+    -- Main Frame (Create FIRST, then add loading inside)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 520, 0, 450)
     MainFrame.Position = UDim2.new(0.5, -260, 0.5, -225)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
     
     local UICorner = Instance.new("UICorner")
